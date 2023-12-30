@@ -29,3 +29,11 @@ jspm_packages/
 .idea/
 .vscode/
 *.swp
+
+# MongoDB data directory
+wfdb-data/
+
+# WiredTiger files (if they're not in the above directory)
+/WiredTiger*
+/wt.*
+
