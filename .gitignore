@@ -47,3 +47,5 @@ wfdb-data/WiredTiger.wt
 *.wt
 wfdb-data/diagnostic.data/metrics.2023-12-30T04-00-47Z-00000
 *.2023-12-30T04-00-47Z-00000
+wfdb-data/WiredTiger.wt
+wfdb-data/journal/WiredTigerLog.0000000006
