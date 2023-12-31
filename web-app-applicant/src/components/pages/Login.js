@@ -205,7 +205,7 @@ const Login = () => {
   return (
     <Container>
       <GradientColumn>
-        <AnimatedText text="App coming soon!" />
+        <AnimatedText text="Visa Application Portal!" />
       </GradientColumn>
 
       <FormColumn>

@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const HeaderContainer = styled.header`
   grid-area: header;
@@ -11,7 +11,7 @@ const HeaderContainer = styled.header`
 const Header = () => {
   return (
     <HeaderContainer>
-      <h1>Service Finder App</h1>
+      <h1>AFS</h1>
     </HeaderContainer>
   );
 };

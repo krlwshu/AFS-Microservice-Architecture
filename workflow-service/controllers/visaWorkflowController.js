@@ -1,11 +1,11 @@
-const VisaWorkflow = require("../models/visaApplicationForm");
+const VisaApplicationForm = require("../models/VisaApplicationForm");
 
 // Get app form by id
 
 exports.getApplicationForm = async (req, res) => {
   try {
     const formId = req.params.id;
-    const applicationForm = await VisaWorkflow.findById(formId);
+    const applicationForm = await VisaApplicationForm.findById(formId);
 
     if (!applicationForm) {
       return res.status(404).json({ message: "Application form not found" });
