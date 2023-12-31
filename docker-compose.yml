@@ -49,16 +49,38 @@ services:
     environment:
       - MONGODB_URI=mongodb://workflow-db:27017/workflowdb
 
-  web-admin:
+  # web-admin-app:
+  #   build:
+  #     context: ./web-admin
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./web-admin:/usr/src/app
+  #   ports:
+  #     - "3003:3000"
+  #   depends_on:
+  #     - workflow-service
+
+  web-app-applicant:
     build:
-      context: ./web-admin
+      context: ./web-applicant-app
       dockerfile: Dockerfile
     volumes:
-      - ./web-admin:/usr/src/app
+      - ./web-app-applicant:/usr/src/app
     ports:
-      - "3003:3000"
+      - "3004:3000"
     depends_on:
       - workflow-service
+
+  # web-branch-app:
+  #   build:
+  #     context: ./web-branch-app
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./web-branch-app:/usr/src/app
+  #   ports:
+  #     - "3005:3000"
+  #   depends_on:
+  #     - workflow-service
 
   workflow-db:
     image: mongo:latest
