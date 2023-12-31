@@ -62,7 +62,7 @@ services:
 
   web-app-applicant:
     build:
-      context: ./web-applicant-app
+      context: ./web-app-applicant
       dockerfile: Dockerfile
     volumes:
       - ./web-app-applicant:/usr/src/app
@@ -109,5 +109,5 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - web-admin
+      - web-app-applicant
       - workflow-service
