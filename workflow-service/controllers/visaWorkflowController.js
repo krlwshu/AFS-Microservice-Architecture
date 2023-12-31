@@ -1,24 +1,17 @@
-const VisaWorkflow = require("../models/VisaWorkflow");
+const VisaWorkflow = require("../models/visaApplicationForm");
 
-// Create a new Visa Workflow
-exports.createVisaWorkflow = async (req, res) => {
-  try {
-    const newVisaWorkflow = new VisaWorkflow(req.body);
-    await newVisaWorkflow.save();
-    res.status(201).json(newVisaWorkflow);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// Get app form by id
 
-// Get all Visa Workflows
-exports.getAllVisaWorkflows = async (req, res) => {
+exports.getApplicationForm = async (req, res) => {
   try {
-    const visaWorkflows = await VisaWorkflow.find().populate({
-      path: "steps.stepId",
-      model: "Step",
-    });
-    res.status(200).json(visaWorkflows);
+    const formId = req.params.id;
+    const applicationForm = await VisaWorkflow.findById(formId);
+
+    if (!applicationForm) {
+      return res.status(404).json({ message: "Application form not found" });
+    }
+
+    res.json(applicationForm);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
