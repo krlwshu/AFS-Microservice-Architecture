@@ -2,10 +2,6 @@ const mongoose = require("mongoose");
 
 const visaApplicationFormSchema = new mongoose.Schema(
   {
-    workflowReference: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "visaApplicationWorkflows",
-    },
     applicationSchema: {
       type: [mongoose.Schema.Types.Mixed], // Store schema in db
     },

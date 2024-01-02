@@ -3,7 +3,10 @@ const cors = require("cors"); // Add this line
 
 const app = express();
 app.use(cors()); // Add this line before defining routes
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 9000;
+
+// Listen for Kafka events
+require("./kafkaConsumer");
 
 const mongoose = require("mongoose");
 const visaWorkflowRoutes = require("./routes/visaWorkflowRoutes");
@@ -30,5 +33,5 @@ app.use(express.json());
 app.use("/api", visaWorkflowRoutes);
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Workflow running on port ${port}`);
 });

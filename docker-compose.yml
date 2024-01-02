@@ -23,19 +23,17 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-  kafka-app:
-    build:
-      context: ./kafka-app
-    volumes:
-      - ./kafka-app:/usr/src/app
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8050:8080"
     environment:
-      - KAFKA_BROKER_URL=kafka:9092
-      - ZOOKEEPER_URL=zookeeper:2181
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     depends_on:
       - kafka
-    ports:
-      - "3001:3001"
 
   workflow-service:
     build:
@@ -43,22 +41,38 @@ services:
     volumes:
       - ./workflow-service:/usr/src/app
     ports:
-      - "3002:3002"
+      - "9000:9000"
     depends_on:
       - kafka
     environment:
       - MONGODB_URI=mongodb://workflow-db:27017/workflowdb
+      - KAFKA_BROKER_URL=kafka:29092
 
-  # web-admin-app:
-  #   build:
-  #     context: ./web-admin
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./web-admin:/usr/src/app
-  #   ports:
-  #     - "3003:3000"
-  #   depends_on:
-  #     - workflow-service
+  # Application / Applicant microservices
+  applicant-svc-db:
+    image: mongo:latest
+    ports:
+      - "27001:27017"
+    volumes:
+      - ./appldb-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${APPL_DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${APPL_DB_PASSWORD}
+
+  applicant-service:
+    build:
+      context: ./applicant-service
+    volumes:
+      - ./applicant-service:/usr/src/app
+    ports:
+      - "9001:9001" # note to self, move all services to 9000 range
+    depends_on:
+      - kafka
+      - workflow-service
+    environment:
+      - MONGODB_URI=mongodb://applicant-svc-db:27017/applicantdb
+      - KAFKA_BROKER_URL=kafka:29092
+      - WORKFLOW_SERVICE_URL=http://workflow-service:9000
 
   web-app-applicant:
     build:
@@ -71,17 +85,7 @@ services:
     depends_on:
       - workflow-service
 
-  # web-branch-app:
-  #   build:
-  #     context: ./web-branch-app
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./web-branch-app:/usr/src/app
-  #   ports:
-  #     - "3005:3000"
-  #   depends_on:
-  #     - workflow-service
-
+  # Visa worklow microservices
   workflow-db:
     image: mongo:latest
     ports:
