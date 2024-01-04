@@ -33,6 +33,8 @@ jspm_packages/
 # MongoDB data directory
 wfdb-data/
 appldb-data/
+branch-data/
+visaauthdb-data/
 
 # WiredTiger files (if they're not in the above directory)
 /WiredTiger*
