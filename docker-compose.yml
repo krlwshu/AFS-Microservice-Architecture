@@ -23,19 +23,17 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-  kafka-app:
-    build:
-      context: ./kafka-app
-    volumes:
-      - ./kafka-app:/usr/src/app
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8050:8080"
     environment:
-      - KAFKA_BROKER_URL=kafka:9092
-      - ZOOKEEPER_URL=zookeeper:2181
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     depends_on:
       - kafka
-    ports:
-      - "3001:3001"
 
   workflow-service:
     build:
@@ -43,23 +41,52 @@ services:
     volumes:
       - ./workflow-service:/usr/src/app
     ports:
-      - "3002:3002"
+      - "9000:9000"
     depends_on:
       - kafka
     environment:
       - MONGODB_URI=mongodb://workflow-db:27017/workflowdb
+      - KAFKA_BROKER_URL=kafka:29092
 
-  web-admin:
+  # Application / Applicant microservices
+  applicant-svc-db:
+    image: mongo:latest
+    ports:
+      - "27001:27017"
+    volumes:
+      - ./appldb-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${APPL_DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${APPL_DB_PASSWORD}
+
+  applicant-service:
     build:
-      context: ./web-admin
+      context: ./applicant-service
+    volumes:
+      - ./applicant-service:/usr/src/app
+    ports:
+      - "9001:9000" # note to self, move all services to 9000 range
+    depends_on:
+      - kafka
+      - workflow-service
+    environment:
+      - MONGODB_URI=mongodb://applicant-svc-db:27017/applicantdb
+      - KAFKA_BROKER_URL=kafka:29092
+      - WORKFLOW_SERVICE_URL=http://workflow-service:9000
+      - VISAAUTH_SERVICE_URL=http://visa-auth-service:9002
+
+  web-app-applicant:
+    build:
+      context: ./web-app-applicant
       dockerfile: Dockerfile
     volumes:
-      - ./web-admin:/usr/src/app
+      - ./web-app-applicant:/usr/src/app
     ports:
-      - "3003:3000"
+      - "3004:3000"
     depends_on:
       - workflow-service
 
+  # Visa worklow microservices
   workflow-db:
     image: mongo:latest
     ports:
@@ -70,6 +97,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${WORKFLOW_DB_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${WORKFLOW_DB_PASSWORD}
 
+  # Auth microservices (needs container)
   user-db:
     image: mongo:latest
     ports:
@@ -80,12 +108,100 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${USER_DB_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${USER_DB_PASSWORD}
 
-  nginx-proxy:
+  # Connection API (simulate API gateway)
+  # nginx-proxy:
+  #   build:
+  #     context: ./nginx-proxy
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:80"
+  #   depends_on:
+  #     - web-app-applicant
+  #     - workflow-service
+
+  # Visa Auth service:
+
+  visa-auth-service:
     build:
-      context: ./nginx-proxy
-      dockerfile: Dockerfile
+      context: ./visa-auth-service
+    volumes:
+      - ./visa-auth-service:/usr/src/app
     ports:
-      - "8080:80"
+      - "9002:9000"
     depends_on:
-      - web-admin
+      - kafka
+      - visa-auth-svc-db
+    environment:
+      - MONGODB_URI=mongodb://visa-auth-svc-db:27017/visaauthdb
+      - KAFKA_BROKER_URL=kafka:29092
+
+  visa-auth-svc-db:
+    image: mongo:latest
+    ports:
+      - "27002:27017"
+    volumes:
+      - ./visaauthdb-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${AUTH_DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${AUTH_DB_PASSWORD}
+
+  # Application / Applicant microservices
+  branch-svc-db:
+    image: mongo:latest
+    ports:
+      - "27003:27017"
+    volumes:
+      - ./branch-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${BRANCH_DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${BRANCH_DB_PASSWORD}
+
+  branch-service:
+    build:
+      context: ./branch-service
+    volumes:
+      - ./branch-service:/usr/src/app
+    ports:
+      - "9003:9003" # note to self, move all services to 9000 range
+    depends_on:
+      - kafka
       - workflow-service
+    environment:
+      - MONGODB_URI=mongodb://branch-svc-db:27017/branchdb
+      - KAFKA_BROKER_URL=kafka:29092
+      - WORKFLOW_SERVICE_URL=http://workflow-service:9000
+
+  web-app-branch:
+    build:
+      context: ./web-app-branch
+      dockerfile: Dockerfile
+    volumes:
+      - ./web-app-branch:/usr/src/app
+    ports:
+      - "3005:3000"
+    depends_on:
+      - branch-service
+# Port list:
+
+# Internal services:
+# zookeeper: 2181
+# kafka: 9092
+# kafka-ui: 8050
+# nginx-proxy: 8080:80
+
+# API services:
+# workflow-service: 9000:9000
+# applicant-service: 9001:9000
+# visa-auth-service: 9002:9000
+# branch-service: 9003:9003
+
+# Web apps:
+# web-app-applicant: 3004:3000
+# web-app-branch: 3005:3000
+
+# Databases:
+# workflow-db: 27017:27017
+# user-db: 27018:27017
+# applicant-svc-db: 27001:27017
+# visa-auth-svc-db: 27002:27017
+# branch-svc-db: 27003:27017
