@@ -1,6 +1,6 @@
 AFS Microservices
 
-# Link to multi-instance version: https://github.com/krlwshu/AFS-Validation-Arch
+# Link to multi-region version: https://github.com/krlwshu/AFS-Validation-Arch
 
 ## Backend services (node js, express mvc)
 - **workflow service** - provides workflow management, steps, application forms
